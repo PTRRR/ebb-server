@@ -1,0 +1,34 @@
+{
+  "name": "ebb-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "qoa": "^0.2.0",
+    "serialport": "^8.0.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "@webpack-cli/init": "^0.2.2",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-syntax-dynamic-import": "^6.18.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "html-webpack-plugin": "^3.2.0",
+    "nodemon": "^1.19.4",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10"
+  },
+  "scripts": {
+    "start": "npm run build && node dist/main",
+    "build": "webpack",
+    "dev": "webpack --watch",
+    "server:dev": "nodemon dist/main"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
