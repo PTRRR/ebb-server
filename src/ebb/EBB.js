@@ -1,6 +1,6 @@
+import { clamp } from '../utils'
 import * as commands from './serial-commands'
-import { printPoint, clamp } from '../utils'
-const MILLIMETER_IN_STEPS = 80
+import { MILLIMETER_IN_STEPS, EBB_CONNECTION_TIMEOUT } from '../config'
 
 export default class EBB {
   constructor () {
@@ -13,31 +13,32 @@ export default class EBB {
 
     this.position = [0, 0]
     this.speed = 50
-
-    // Callbacks
-    this.onFinishCallback = null
   }
 
   async initializeController (port, config) {
-    return new Promise(async (resolve, reject) => {
-      // Set a timeout delay
-      const connectionTimeoutId = setTimeout(() => {
-				reject('ERROR: Can\'t connect to the EggBotBoard.')
-      }, 3000)
-
-      this.initializeSerialConnection(port)
-      await this.configureController(config)
-      clearTimeout(connectionTimeoutId)
-			resolve()
-    })
-  }
-
-  initializeSerialConnection (port) {
+    let initialized = false
     this.port = port
-    this.port.on('data', buffer => {
-      const datas = buffer.toString('utf-8').split(/\n\r|\r\n/)
-      datas.splice(-1, 1)
-      // Handle here serial data
+    this.config = config
+
+    return new Promise(async (resolve, reject) => {
+      const connectionTimeoutId = setTimeout(() => {
+        reject('Can\'t connect to the EggBotBoard.')
+      }, EBB_CONNECTION_TIMEOUT)
+
+      // Resolve initial promise when we get
+      // the first feedback from the board
+      port.on('data', buffer => {
+        const datas = buffer.toString('utf-8').split(/\n\r|\r\n/)
+        datas.splice(-1, 1)
+
+        if (!initialized) {
+          initialized = true
+          clearTimeout(connectionTimeoutId)
+          resolve()
+        }
+      })
+
+      await this.configureController(config)
     })
   }
 

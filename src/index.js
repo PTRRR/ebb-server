@@ -1,5 +1,5 @@
 import EBB from './ebb'
-import { logSuccess } from './logger'
+import { logSuccess, logError } from './logger'
 import { CONFIG_PATH } from './config'
 import { getSerialPort } from './serial-connection'
 import { getConfig, runConfigSelector, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
@@ -21,16 +21,20 @@ async function runConfigPrompts () {
 }
 
 async function initialize () {
-  const { serialConfig, ebbConfig } = await runConfigPrompts()
-  saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
-  logSuccess('Config file saved!')
+  try {
+    const { serialConfig, ebbConfig } = await runConfigPrompts()
+    saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
+    logSuccess('Config file saved!')
 
-  const serialPort = getSerialPort(serialConfig)
-  logSuccess('Serial port initialized!')
-  
-  const ebb = new EBB()
-  await ebb.initializeController(serialPort, ebbConfig)
-  logSuccess('EBB controller initialized!')
+    const serialPort = getSerialPort(serialConfig)
+    logSuccess('Serial port initialized!')
+    
+    const ebb = new EBB()
+    await ebb.initializeController(serialPort, ebbConfig)
+    logSuccess('EBB controller initialized!')
+  } catch (error) {
+    logError(error)
+  }
 }
 
 initialize()
