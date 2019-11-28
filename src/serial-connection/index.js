@@ -1,11 +1,12 @@
 import SerialPort from 'serialport'
 
 export async function getSerialList () {
-  return []
+  return SerialPort.list()
 }
 
 export function getSerialPort (options = {}) {
-  console.log(options)
+  const { path } = options
+  return new SerialPort(path)
 }
 
 export const fakeSerialList = [

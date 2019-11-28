@@ -1,13 +1,13 @@
 import qoa from 'qoa'
-import { fakeSerialList } from '../serial-connection'
+import { getSerialList } from '../serial-connection'
 
 function getPortId(port) {
-  const { name, manufacturer } = port
-  return `${name} - ${manufacturer}`
+  const { path, manufacturer } = port
+  return `${path} - ${manufacturer}`
 }
 
 export async function runSerialPrompt () {
-  const serialList = fakeSerialList
+  const serialList = await getSerialList()
   const config = await qoa.prompt([
     {
       type: 'interactive',
@@ -22,7 +22,21 @@ export async function runSerialPrompt () {
 }
 
 export async function runEbbPrompt () {
-  return await qoa.prompt([
+  const defaultConfig = {
+    configName: 'A4_VERTICAL',
+    maxWidth: 210,
+    maxHeight: 148,
+    minStepsPerMillisecond: 0.07,
+    maxStepsPerMillisecond: 15,
+    servoRate: 40000,
+    minServoHeight: 20000,
+    maxServoHeight: 16000,
+    drawingSpeed: 40,
+    movingSpeed: 70,
+    minDeltaPositionForDistinctLines: 2
+  }
+
+  const config = await qoa.prompt([
     {
       type: 'input',
       query: 'Config name',
@@ -74,4 +88,12 @@ export async function runEbbPrompt () {
       handle: 'movingSpeed'
     }
   ])
+
+  for (const [key, value] of Object.entries(config)) {
+    if (!value) {
+      config[key] = defaultConfig[key]
+    }
+  }
+
+  return config
 }

@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "scripts": {
+    "start": "node dist/main",
+    "build": "webpack",
+    "dev": "webpack --watch",
+    "server:dev": "nodemon dist/main"
+  },
   "dependencies": {
+    "figlet": "^1.2.4",
     "qoa": "^0.2.0",
-    "serialport": "^8.0.5"
+    "serialport": "^8.0.5",
+    "signale": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",
@@ -21,12 +29,6 @@
     "nodemon": "^1.19.4",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
-  },
-  "scripts": {
-    "start": "npm run build && node dist/main",
-    "build": "webpack",
-    "dev": "webpack --watch",
-    "server:dev": "nodemon dist/main"
   },
   "keywords": [],
   "author": "",

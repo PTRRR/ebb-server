@@ -1,0 +1,1 @@
+export const MILLIMETER_IN_STEPS = 80
