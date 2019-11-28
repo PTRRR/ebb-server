@@ -1,6 +1,7 @@
 import fs from 'fs'
-import path from 'path'
 import qoa from 'qoa'
+import { logWarn } from '../logger'
+import { DEFAULT_EBB_CONFIG } from '../config'
 import { getSerialList } from '../serial-connection'
 
 export async function getConfig (configPath) {
@@ -51,20 +52,6 @@ export async function runSerialPrompt () {
 }
 
 export async function runEbbPrompt () {
-  const defaultConfig = {
-    configName: 'A4_VERTICAL',
-    maxWidth: 210,
-    maxHeight: 148,
-    minStepsPerMillisecond: 0.07,
-    maxStepsPerMillisecond: 15,
-    servoRate: 40000,
-    minServoHeight: 20000,
-    maxServoHeight: 16000,
-    drawingSpeed: 40,
-    movingSpeed: 70,
-    minDeltaPositionForDistinctLines: 2
-  }
-
   const config = await qoa.prompt([
     {
       type: 'input',
@@ -120,7 +107,9 @@ export async function runEbbPrompt () {
 
   for (const [key, value] of Object.entries(config)) {
     if (!value) {
-      config[key] = defaultConfig[key]
+      const defaultValue = DEFAULT_EBB_CONFIG[key]
+      config[key] = defaultValue
+      logWarn(`Default value for ${key}: ${defaultValue}`)
     }
   }
 

@@ -1,8 +1,8 @@
 import EBB from './ebb'
 import { logSuccess } from './logger'
+import { CONFIG_PATH } from './config'
 import { getSerialPort } from './serial-connection'
 import { getConfig, runConfigSelector, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
-const CONFIG_PATH = 'ebb-config.json'
 
 async function runConfigPrompts () {
   const existingConfig = await getConfig(CONFIG_PATH)
@@ -23,6 +23,7 @@ async function runConfigPrompts () {
 async function initialize () {
   const { serialConfig, ebbConfig } = await runConfigPrompts()
   saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
+  logSuccess('Config file saved!')
 
   const serialPort = getSerialPort(serialConfig)
   logSuccess('Serial port initialized!')
