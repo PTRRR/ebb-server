@@ -1,9 +1,38 @@
+import fs from 'fs'
+import path from 'path'
 import qoa from 'qoa'
 import { getSerialList } from '../serial-connection'
+
+export async function getConfig (configPath) {
+  return new Promise((resolve, reject) => {
+    const exists = fs.existsSync(configPath)
+    if (exists) {
+      const config = fs.readFileSync(`${configPath}`, 'utf8', error => {
+        if (error) {
+          reject(error)
+        }
+      })
+      resolve(JSON.parse(config))
+    } else {
+      resolve(null)
+    }
+  })
+}
 
 function getPortId(port) {
   const { path, manufacturer } = port
   return `${path} - ${manufacturer}`
+}
+
+export async function runConfigSelector () {
+  return qoa.prompt([
+    {
+      type: 'interactive',
+      query: 'Use existing config file.',
+      handle: 'useExistingConfig',
+      menu: [true, false]
+    }
+  ])
 }
 
 export async function runSerialPrompt () {
@@ -97,3 +126,16 @@ export async function runEbbPrompt () {
 
   return config
 }
+
+export async function saveConfig (name, config) {
+  return new Promise((resolve, reject) => {
+    fs.writeFileSync(`${name}`, JSON.stringify(config), error => {
+      if (error) {
+        reject(error)
+      } else {
+        resolve()
+      }
+    })
+  })
+}
+

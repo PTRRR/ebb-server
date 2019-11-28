@@ -1,31 +1,35 @@
-import signale from 'signale'
-import figlet from 'figlet'
-import { loadFont } from './logger'
 import EBB from './ebb'
-import { runSerialPrompt, runEbbPrompt } from './cli'
+import { logSuccess } from './logger'
 import { getSerialPort } from './serial-connection'
+import { getConfig, runConfigSelector, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
+const CONFIG_PATH = 'ebb-config.json'
 
-async function initialize () {
-  const font = loadFont('./fonts/banner4.flf');
-  console.log(font)
-  // figlet.defaults({ fontPath: "./fontssas" });
-  // console.log(
-  //   figlet.textSync('Hello World!!', {
-  //     font: 'banner4',
-  //     horizontalLayout: 'full',
-  //     verticalLayout: 'default'
-  //   })
-  // )
-  
+async function runConfigPrompts () {
+  const existingConfig = await getConfig(CONFIG_PATH)
+
+  if (existingConfig) {
+    const { useExistingConfig } = await runConfigSelector()
+    if (useExistingConfig) {
+      return existingConfig
+    }
+  }
+
   const serialConfig = await runSerialPrompt()
   const ebbConfig = await runEbbPrompt()
 
+  return { serialConfig, ebbConfig }
+}
+
+async function initialize () {
+  const { serialConfig, ebbConfig } = await runConfigPrompts()
+  saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
+
   const serialPort = getSerialPort(serialConfig)
-  signale.success('Serial port initialized!')
+  logSuccess('Serial port initialized!')
   
   const ebb = new EBB()
   await ebb.initializeController(serialPort, ebbConfig)
-  signale.success('EBB controller initialized & configured!')
+  logSuccess('EBB controller initialized!')
 }
 
 initialize()
