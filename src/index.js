@@ -1,12 +1,17 @@
 import EBB from './ebb'
 import { logSuccess, logError } from './logger'
-import { CONFIG_PATH } from './config'
+import { CONFIG_PATH, DEVELOPMENT_ENV } from './config'
 import { getSerialPort } from './serial-connection'
 import { runCircleTest } from './tests'
 import { getConfig, runConfigSelector, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
+const { SERVER_ENV } = process.env
 
 async function runConfigPrompts () {
   const existingConfig = await getConfig(CONFIG_PATH)
+
+  if (SERVER_ENV === DEVELOPMENT_ENV) {
+    return existingConfig
+  }
 
   if (existingConfig) {
     const { useExistingConfig } = await runConfigSelector()
@@ -24,8 +29,11 @@ async function runConfigPrompts () {
 async function initialize () {
   try {
     const { serialConfig, ebbConfig } = await runConfigPrompts()
-    saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
-    logSuccess('Config file saved!')
+
+    if (SERVER_ENV !== DEVELOPMENT_ENV) {
+      saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
+      logSuccess('Config file saved!')
+    }
 
     const serialPort = getSerialPort(serialConfig)
     logSuccess('Serial port initialized!')
@@ -33,7 +41,7 @@ async function initialize () {
     const ebb = new EBB()
     await ebb.initializeController(serialPort, ebbConfig)
     logSuccess('EBB controller initialized!')
-    await runCircleTest(ebb)
+    // await runCircleTest(ebb)
   } catch (error) {
     logError(error)
   }

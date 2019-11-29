@@ -359,3 +359,74 @@ export async function queryMotor (port) {
     resolve({ type: 'QM' })
   })
 }
+
+/**
+ * "QG" — Query General
+ * Command: QG<CR>
+ * Execution: Immediate
+ * This command reads the status of eight bits of information, and returns them as a bit
+ * field expressed as a single hexadecimal byte. 
+ * 
+ * Bit 7: RB5 — Status of GPIO pin RB5
+ * This bit is 1 when GPIO pin RB5 is high, and 0 when it is low. RB5 does not have
+ * to be set to an input to be read. The QG command will read the state even if it is
+ * an output. If the pin is in use as an RC servo output, the bit will be toggling and
+ * that will be reflected in the response byte. Pin RB5 can be used for various useful
+ * purposes as desired, for example as a home switch input or output to control a tool
+ * head.
+ * 
+ * Bit 6: RB2 — Status of GPIO pin RB2
+ * This bit is 1 when GPIO pin RB2 is high, and 0 when it is low. Its properties are
+ * otherwise the same as the RB5 bit.
+ * 
+ * Bit 5: PRG — PRG Button Pressed
+ * This bit will be 1 if the PRG button has been pushed since the last QG or QB query.
+ * Otherwise it will be 0.
+ * 
+ * Bit 4: PEN — Pen is down
+ * This bit is 1 when the pen is down, and 0 when the pen is up. The pen status is given
+ * by the position of the pen-lift servo output, which can be controlled with the SP command
+ * and can be read with the QP query. Note that this is the commanded state of the pen,
+ * and that it does physically take time to lift from or lower to the page.
+ * 
+ * Bit 3: CMD — Command Executing
+ * This bit will be 1 when a command is being executed, and 0 otherwise. The command may
+ * be a command that causes motion (like a motor move command) or any other command listed
+ * in this document as 'Execution: Added to FIFO motion queue'.
+ * 
+ * Bit 2: MTR1 — Motor 1 moving
+ * This bit is 1 when Motor 1 is in motion and 0 when it is idle.
+ * 
+ * Bit 1: MTR2 — Motor 2 moving
+ * This bit is 1 when Motor 2 is in motion and 0 when it is idle.
+ * 
+ * Bit 0: FIFO — FIFO motion queue not empty
+ * This bit will be 1 when a command is executing and a second command is awaiting execution
+ * in the 1-deep "FIFO" motion queue. It is 0 otherwise. The CMD bit will always be 1 when
+ * the FIFO bit is 1; if the FIFO is full, then a command is currently executing. Additional
+ * information about the motion queue can be found in the description of the QM query.
+ */
+
+export async function generalQuery (port) {
+  return new Promise(async resolve => {
+    await port.drain()
+    await port.write('QG\r')
+    resolve({ type: 'QG' })
+  })
+}
+
+/**
+ * "V" — Version query
+ * Command: V<CR>
+ * Execution: Immediate
+ * This command prints out the version string of the firmware currently running on the EBB. The
+ * actual version string returned may be different from the example above. 
+ */
+
+export async function version (port) {
+  return new Promise(async resolve => {
+    await port.drain()
+    await port.write('V\r')
+    resolve({ type: 'V' })
+  })
+}

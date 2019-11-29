@@ -1,4 +1,5 @@
 export const CONFIG_PATH = 'ebb-config.json'
+export const DEVELOPMENT_ENV = 'development'
 export const EBB_CONNECTION_TIMEOUT = 500
 export const MILLIMETER_IN_STEPS = 80
 export const DEFAULT_EBB_CONFIG = {
