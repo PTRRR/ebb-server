@@ -25,7 +25,7 @@ function getPortId(port) {
   return `${path} - ${manufacturer}`
 }
 
-export async function runConfigSelector () {
+export async function runConfigSelection () {
   return qoa.prompt([
     {
       type: 'interactive',

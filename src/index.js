@@ -3,7 +3,7 @@ import { logSuccess, logError } from './logger'
 import { CONFIG_PATH, DEVELOPMENT_ENV } from './config'
 import { getSerialPort } from './serial-connection'
 import { runCircleTest } from './tests'
-import { getConfig, runConfigSelector, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
+import { getConfig, runConfigSelection, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
 const { SERVER_ENV } = process.env
 
 async function runConfigPrompts () {
@@ -14,7 +14,7 @@ async function runConfigPrompts () {
   }
 
   if (existingConfig) {
-    const { useExistingConfig } = await runConfigSelector()
+    const { useExistingConfig } = await runConfigSelection()
     if (useExistingConfig) {
       return existingConfig
     }
