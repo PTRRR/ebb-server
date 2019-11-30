@@ -3,6 +3,7 @@ import chalk from 'chalk'
 import clear from 'clear'
 import figlet from 'figlet'
 import signale from 'signale'
+import { wait } from '../utils/time'
 import { DEFAULT_FONT } from '../config'
 
 class Log {
@@ -36,6 +37,16 @@ class Log {
   banner (text, font = DEFAULT_FONT) {
     const banner = figlet.textSync(text, font)
     console.log(chalk.red.bold(banner))
+  }
+
+  async animatedBanner (text, interval, font = DEFAULT_FONT) {
+    let string = ''
+    for (const letter of text) {
+      string += letter
+      await this.clear()
+      await this.banner(string, font)
+      await wait(interval)
+    }
   }
 
   success (text) {

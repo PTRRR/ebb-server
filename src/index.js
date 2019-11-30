@@ -21,12 +21,12 @@ async function runConfigPrompts () {
     }
   }
 
-  await log.clear()
-  await log.banner('Serial Config', 'cybermedium')
+  log.clear()
+  log.banner('Serial', 'cybermedium')
   const serialConfig = await runSerialPrompt()
 
-  await log.clear()
-  await log.banner('EBB Config', 'cybermedium')
+  log.clear()
+  log.banner('EBB', 'cybermedium')
   const ebbConfig = await runEbbPrompt()
 
   return { serialConfig, ebbConfig }
@@ -35,15 +35,16 @@ async function runConfigPrompts () {
 async function initialize () {
   try {
     // Log intro banner
-    await log.clear()
     await log.loadFonts(FONTS_TO_LOAD)
-    await log.banner('- SSC -')
+    await wait(200)
+    await log.animatedBanner('SSC', 150)
 
     const { serialConfig, ebbConfig } = await runConfigPrompts()
 
     await wait(1000)
-    await log.clear()
-    await log.banner('EBB - Server', 'cybermedium')
+
+    log.clear()
+    log.banner('EBB - Server', 'cybermedium')
 
     if (SERVER_ENV !== DEVELOPMENT_ENV) {
       await saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
@@ -62,4 +63,5 @@ async function initialize () {
   }
 }
 
+log.clear()
 initialize()
