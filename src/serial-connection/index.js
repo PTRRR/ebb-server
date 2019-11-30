@@ -4,9 +4,19 @@ export async function getSerialList () {
   return SerialPort.list()
 }
 
-export function getSerialPort (options = {}) {
+export async function getSerialPort (options = {}) {
   const { path } = options
-  return new SerialPort(path)
+  return new Promise((resolve, reject) => {
+    const port = new SerialPort(path)
+    
+    port.on('error', error => {
+      reject(error)
+    })
+
+    port.on('open', () => {
+      resolve(port)
+    })
+  })
 }
 
 export const fakeSerialList = [

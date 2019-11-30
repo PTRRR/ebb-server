@@ -31,11 +31,11 @@ async function initialize () {
     const { serialConfig, ebbConfig } = await runConfigPrompts()
 
     if (SERVER_ENV !== DEVELOPMENT_ENV) {
-      saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
+      await saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
       logSuccess('Config file saved!')
     }
 
-    const serialPort = getSerialPort(serialConfig)
+    const serialPort = await getSerialPort(serialConfig)
     logSuccess('Serial port initialized!')
     
     const ebb = new EBB()

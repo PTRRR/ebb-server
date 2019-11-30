@@ -118,13 +118,12 @@ export async function runEbbPrompt () {
 
 export async function saveConfig (name, config) {
   return new Promise((resolve, reject) => {
-    fs.writeFileSync(`${name}`, JSON.stringify(config), error => {
-      if (error) {
-        reject(error)
-      } else {
-        resolve()
-      }
-    })
+    try {
+      fs.writeFileSync(`${name}`, JSON.stringify(config))
+      resolve()
+    } catch (error) {
+      reject(error)
+    }
   })
 }
 
