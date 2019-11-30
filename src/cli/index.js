@@ -29,7 +29,7 @@ export async function runConfigSelection () {
   return qoa.prompt([
     {
       type: 'interactive',
-      query: 'Use existing config file.',
+      query: 'Do you want to use an existing config file?',
       handle: 'useExistingConfig',
       menu: [true, false]
     }
@@ -41,7 +41,7 @@ export async function runSerialPrompt () {
   const config = await qoa.prompt([
     {
       type: 'interactive',
-      query: 'Choose the serial port.',
+      query: 'Select a serial port:',
       handle: 'port',
       menu: serialList.map(port => getPortId(port))
     }
@@ -53,11 +53,6 @@ export async function runSerialPrompt () {
 
 export async function runEbbPrompt () {
   const config = await qoa.prompt([
-    {
-      type: 'input',
-      query: 'Config name',
-      handle: 'configName'
-    },
     {
       type: 'input',
       query: 'Enter max width [mm]:',
@@ -109,7 +104,7 @@ export async function runEbbPrompt () {
     if (!value) {
       const defaultValue = DEFAULT_EBB_CONFIG[key]
       config[key] = defaultValue
-      logWarn(`Default value for ${key}: ${defaultValue}`)
+      logWarn(`Default ${key}: ${defaultValue}`)
     }
   }
 
