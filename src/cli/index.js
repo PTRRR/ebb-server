@@ -1,6 +1,6 @@
 import fs from 'fs'
 import qoa from 'qoa'
-import { logWarn } from '../logger'
+import { log } from '../log'
 import { DEFAULT_EBB_CONFIG } from '../config'
 import { getSerialList } from '../serial-connection'
 
@@ -104,7 +104,7 @@ export async function runEbbPrompt () {
     if (!value) {
       const defaultValue = DEFAULT_EBB_CONFIG[key]
       config[key] = defaultValue
-      logWarn(`Default ${key}: ${defaultValue}`)
+      log.warn(`Default ${key}: ${defaultValue}`)
     }
   }
 

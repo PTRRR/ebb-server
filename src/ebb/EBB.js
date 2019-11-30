@@ -1,5 +1,5 @@
 import { clamp } from '../utils'
-import { logComplete } from '../logger'
+import { log } from '../log'
 import * as commands from './serial-commands'
 import { MILLIMETER_IN_STEPS, EBB_CONNECTION_TIMEOUT } from '../config'
 
@@ -60,7 +60,7 @@ export default class EBB {
     const buffer = new Buffer.from(data)
     console.log(buffer)
     const { type, resolve } = this.commandQueue.pop() || {}
-    if (data && type) logComplete(`${type}: ${data}`)
+    if (data && type) log.complete(`${type}: ${data}`)
     setTimeout(() => {
       // console.log('asdlkjh')
       if (resolve) resolve(data)
