@@ -31,24 +31,20 @@ export default class EBB {
       // Resolve initial promise when we get the first feedback
       // from the board
       const parser = port.pipe(new InterByteTimeout({interval: 15}))
-      parser.on('data', data => {
+      parser.on('data', async data => {
         this.handleSerialData(data)
 
         if (!initialized) {
           initialized = true
           clearTimeout(connectionTimeoutId)
+          await wait(1000)
+          await this.reset()
+          await this.configureController(config)
           resolve()
         }
       })
 
       await this.getVersion()
-      await wait(1000)
-      await this.reset()
-      await this.configureController(config)
-      await this.enableStepperMotors()
-      await this.moveTo(5000, 5000)
-      await this.home()
-      await this.disableStepperMotors()
     })
   }
 
@@ -88,7 +84,7 @@ export default class EBB {
     })
   }
 
-  async waitUntilStop () {
+  async waitUntilQueueIsEmpty () {
     return new Promise(async resolve => {
       let status = await this.getGeneralQuery()
       while (status !== 'D0\r\n') {
@@ -165,7 +161,7 @@ export default class EBB {
 
   async disableStepperMotors () {
     return new Promise(async resolve => {
-      await this.waitUntilStop()
+      await this.waitUntilQueueIsEmpty()
       const command = await commands.enableMotors(this.port, {
         enable1: 0,
         enable2: 0
