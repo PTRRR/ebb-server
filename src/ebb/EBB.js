@@ -52,7 +52,7 @@ export default class EBB {
     
     if ((data || args) && type && logCommand) {
       const message = args || data
-      log.complete(`${type}: ${message}`.trim())
+      log.command(`${type}: ${message}`.trim())
     }
 
     if (resolve) {

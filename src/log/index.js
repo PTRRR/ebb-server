@@ -3,8 +3,26 @@ import chalk from 'chalk'
 import clear from 'clear'
 import figlet from 'figlet'
 import signale from 'signale'
+import { Signale } from 'signale'
 import { wait } from '../utils/time'
 import { DEFAULT_FONT } from '../config'
+
+const cmdSignale = new Signale({
+  disabled: false,
+  interactive: false,
+  logLevel: 'info',
+  secrets: [],
+  scope: 'cmd',
+  stream: process.stdout,
+  types: {
+    command: {
+      badge: '*',
+      color: 'blue',
+      label: 'run',
+      logLevel: 'info'
+    }
+  }
+})
 
 class Log {
   async loadFonts (fonts) {
@@ -55,7 +73,11 @@ class Log {
   }
 
   complete (text) {
-    return signale.complete(text)
+    return signale.note(text)
+  }
+
+  command (text) {
+    return cmdSignale.command(text)
   }
 
   warn (text) {
