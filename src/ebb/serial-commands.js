@@ -50,14 +50,6 @@ export function getDuration (
   return duration
 }
 
-export async function wait (duration) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve()
-    }, duration)
-  })
-}
-
 export async function reboot (port) {
   return new Promise(async resolve => {
     await port.drain()
@@ -122,7 +114,11 @@ export async function stepperAndServoModeConfigure (port, args) {
   return new Promise(async resolve => {
     await port.drain()
     await port.write(`SC,${parameter},${integer}\r`)
-    resolve({ type: 'SC', ...args })
+    resolve({
+      type: 'Stepper and Servo Mode Configure',
+      logCommand: true,
+      args: `[parameter: ${parameter}; value: ${integer}]`
+    })
   })
 }
 
@@ -158,7 +154,11 @@ export async function setPenState (port, args) {
   return new Promise(async resolve => {
     await port.drain()
     await port.write(`SP,${state},${duration}\r`)
-    resolve({ type: 'SP', ...args })
+    resolve({
+      type: 'Set Pen State',
+      logCommand: true,
+      args: `[state: ${state}]`
+    })
   })
 }
 
@@ -210,7 +210,11 @@ export async function enableMotors (port, args) {
   return new Promise(async resolve => {
     await port.drain()
     await port.write(`EM,${enable1},${enable2}\r`)
-    resolve({ type: 'EM', ...args })
+    resolve({
+      type: 'Enable Motors',
+      logCommand: true,
+      args: `[motor1: ${enable1}; motor2: ${enable2}]`
+    })
   })
 }
 
@@ -259,6 +263,46 @@ export async function enableMotors (port, args) {
 // }
 
 /**
+ * "HM" — Home Move
+ * Command: HM,StepRate<CR>
+ * Execution: Added to FIFO motion queue
+ * 
+ * Use this command to return the motors from whatever their current position
+ * is, as defined by the global step counters, back to position 0,0. The value
+ * of the step counters can be read with the QS query. The step rate at which 
+ * the homing should happen is specified as a parameter.
+ * 
+ * Take note that the move may not be a straight line. There are circumstances
+ * (where one axis has a lot of steps to take, and the other has very few) where
+ * the homing operation is broken down into to move segments to prevent a step
+ * rate on the small axis from being lower than 1.3Hz. The HM command takes care 
+ * of this internally.
+ * 
+ * The command will wait until all previous motor motion ceases before beginning
+ * the home operation.
+ * 
+ * If either of the global step counter values is greater than 4,294,967 the command
+ * will error out. If you need to home from further away than this, multiple normal
+ * moves back to zero can be sent to accomplish the same thing.
+ * 
+ * When the motors are disabled, enabled, or the microstep size is changed (all via the
+ * EM command) the global step counters are zeroed. 
+*/
+
+export async function homeMove (port, args) {
+  const { stepRate } = args
+  return new Promise(async resolve => {
+    await port.drain()
+    await port.write(`HM,${stepRate}\r`)
+    resolve({
+      type: 'Home Move',
+      logCommand: true,
+      args: `[stepRate: ${stepRate}]`
+    })
+  })
+}
+
+/**
  * "SM" — Stepper Move
  * Command: SM,duration,AxisSteps1[,AxisSteps2]<CR>
  *
@@ -285,7 +329,11 @@ export async function stepperMove (port, args) {
   return new Promise(async resolve => {
     await port.drain()
     await port.write(`SM,${duration},${axisSteps1},${axisSteps2}\r`)
-    resolve({ type: 'SM', ...args })
+    resolve({
+      type: 'Stepper Move',
+      logCommand: true,
+      args: `[X: ${axisSteps1}; Y: ${axisSteps2}]`
+    })
   })
 }
 
@@ -304,7 +352,11 @@ export async function lowLevelMove (port, args) {
     await port.write(
       `LM,${rateTerm1},${axisSteps1},${deltaR1},${rateTerm2},${axisSteps2},${deltaR2}\r`
     )
-    resolve({ type: 'LM', ...args })
+    resolve({
+      type: 'Low Level Move',
+      logCommand: true,
+      args
+    })
   })
 }
 
@@ -427,6 +479,6 @@ export async function version (port) {
   return new Promise(async resolve => {
     await port.drain()
     await port.write('V\r')
-    resolve({ type: 'V' })
+    resolve({ type: 'Version query', logCommand: true })
   })
 }

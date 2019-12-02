@@ -42,9 +42,10 @@ class Log {
   async animatedBanner (text, interval, font = DEFAULT_FONT) {
     let string = ''
     for (const letter of text) {
+      this.clear()
+      if (!string) await wait(interval)
       string += letter
-      await this.clear()
-      await this.banner(string, font)
+      this.banner(string, font)
       await wait(interval)
     }
   }

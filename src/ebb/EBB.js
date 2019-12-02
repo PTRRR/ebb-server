@@ -1,4 +1,6 @@
-import { clamp } from '../utils'
+import Readline from '@serialport/parser-readline'
+import InterByteTimeout from '@serialport/parser-inter-byte-timeout'
+import { clamp, wait } from '../utils'
 import { log } from '../log'
 import * as commands from './serial-commands'
 import { MILLIMETER_IN_STEPS, EBB_CONNECTION_TIMEOUT } from '../config'
@@ -23,21 +25,15 @@ export default class EBB {
 
     return new Promise(async (resolve, reject) => {
       const connectionTimeoutId = setTimeout(() => {
-        // reject('Can\'t connect to the EggBotBoard.')
+        reject('Can\'t connect to the EggBotBoard.')
       }, EBB_CONNECTION_TIMEOUT)
 
-      // Resolve initial promise when we get
-      // the first feedback from the board
-      let lastData = ''
-      port.on('data', buffer => {
-        const string = `${lastData}${buffer.toString('utf-8')}`
-        const datas = string.split(/\n\r|\r\n/)
-        lastData = datas.pop()
-        
-        for (const data of datas) {
-          this.handleSerialData(data)
-        }
-        
+      // Resolve initial promise when we get the first feedback
+      // from the board
+      const parser = port.pipe(new InterByteTimeout({interval: 15}))
+      parser.on('data', data => {
+        this.handleSerialData(data)
+
         if (!initialized) {
           initialized = true
           clearTimeout(connectionTimeoutId)
@@ -46,49 +42,59 @@ export default class EBB {
       })
 
       await this.getVersion()
+      await wait(1000)
       await this.reset()
-      await this.getGeneralQuery()
+      await this.configureController(config)
       await this.enableStepperMotors()
+      await this.moveTo(5000, 5000)
+      await this.home()
       await this.disableStepperMotors()
-      // await this.configureController(config)
-      setTimeout(async () => {
-      }, 100)
     })
   }
 
   handleSerialData (data) {
-    const buffer = new Buffer.from(data)
-    console.log(buffer)
-    const { type, resolve } = this.commandQueue.pop() || {}
-    if (data && type) log.complete(`${type}: ${data}`)
-    setTimeout(() => {
-      // console.log('asdlkjh')
-      if (resolve) resolve(data)
-    }, 1000)
+    const { type, resolve, logCommand, args } = this.commandQueue.pop() || {}
+    
+    if ((data || args) && type && logCommand) {
+      const message = args || data
+      log.complete(`${type}: ${message}`.trim())
+    }
+
+    if (resolve) {
+      resolve(`${data}`)
+    }
   }
 
   async configureController (config) {
     this.config = config
     const { minServoHeight, maxServoHeight, servoRate } = this.config
     
-    // await this.reset()
-    // await this.setServoMinHeight(minServoHeight)
-    // await this.setServoMaxHeight(maxServoHeight)
-    // await this.setServoRate(servoRate)
+    await this.reset()
+    await this.setServoMinHeight(minServoHeight)
+    await this.setServoMaxHeight(maxServoHeight)
+    await this.setServoRate(servoRate)
 
     // Configuration feedback
-    // await this.enableStepperMotors()
-    // await this.lowerBrush()
-    // await this.raiseBrush()
-    // await this.moveTo(1000, 1000)
-    // await this.getGeneralQuery()
-    // await this.disableStepperMotors()
+    await this.enableStepperMotors()
+    await this.lowerBrush()
+    await this.raiseBrush()
+    await this.disableStepperMotors()
   }
 
   addToCommandQueue (command, resolve) {
     this.commandQueue.push({
       resolve,
       ...command
+    })
+  }
+
+  async waitUntilStop () {
+    return new Promise(async resolve => {
+      let status = await this.getGeneralQuery()
+      while (status !== 'D0\r\n') {
+        status = await this.getGeneralQuery()
+      }
+      setTimeout(resolve, 100)
     })
   }
 
@@ -159,6 +165,7 @@ export default class EBB {
 
   async disableStepperMotors () {
     return new Promise(async resolve => {
+      await this.waitUntilStop()
       const command = await commands.enableMotors(this.port, {
         enable1: 0,
         enable2: 0
@@ -185,6 +192,14 @@ export default class EBB {
       this.addToCommandQueue(command, resolve)
     })
   }
+
+  async home () {
+    return new Promise(async resolve => {
+      const command = await commands.homeMove(this.port, { stepRate: 10000 })
+      this.addToCommandQueue(command, resolve)
+    })
+  }
+
   //80step = 1mm
   async moveTo (targetX, targetY) {
     return new Promise(async resolve => {

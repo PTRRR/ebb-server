@@ -11,6 +11,7 @@
     "server:dev": "nodemon dist/main"
   },
   "dependencies": {
+    "@serialport/parser-inter-byte-timeout": "^8.0.4",
     "chalk": "^3.0.0",
     "clear": "^0.1.0",
     "cross-env": "^6.0.3",

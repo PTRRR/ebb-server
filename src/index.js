@@ -4,7 +4,7 @@ import { wait } from './utils/time'
 import { getSerialPort } from './serial-connection'
 import { runCircleTest } from './tests'
 import { getConfig, runConfigSelection, runSerialPrompt, runEbbPrompt, saveConfig } from './cli'
-import { CONFIG_PATH, DEVELOPMENT_ENV, FONTS_TO_LOAD } from './config'
+import { CONFIG_PATH, DEVELOPMENT_ENV, FONTS_TO_LOAD, ANIMATION_INTERVAL } from './config'
 const { SERVER_ENV } = process.env
 
 async function runConfigPrompts () {
@@ -22,11 +22,11 @@ async function runConfigPrompts () {
   }
 
   log.clear()
-  log.banner('Serial', 'cybermedium')
+  await log.animatedBanner('Serial', ANIMATION_INTERVAL)
   const serialConfig = await runSerialPrompt()
 
   log.clear()
-  log.banner('EBB', 'cybermedium')
+  await log.animatedBanner('EBB', ANIMATION_INTERVAL)
   const ebbConfig = await runEbbPrompt()
 
   return { serialConfig, ebbConfig }
@@ -37,14 +37,11 @@ async function initialize () {
     // Log intro banner
     await log.loadFonts(FONTS_TO_LOAD)
     await wait(200)
-    await log.animatedBanner('SSC', 150)
+    await log.animatedBanner('SSC', ANIMATION_INTERVAL)
 
     const { serialConfig, ebbConfig } = await runConfigPrompts()
-
-    await wait(1000)
-
     log.clear()
-    log.banner('EBB - Server', 'cybermedium')
+    await log.animatedBanner('EBB - Server', ANIMATION_INTERVAL)
 
     if (SERVER_ENV !== DEVELOPMENT_ENV) {
       await saveConfig(CONFIG_PATH, { serialConfig, ebbConfig })
