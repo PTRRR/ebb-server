@@ -1,5 +1,4 @@
 import Readline from '@serialport/parser-readline'
-import InterByteTimeout from '@serialport/parser-inter-byte-timeout'
 import { clamp, wait } from '../utils'
 import { log } from '../log'
 import * as commands from './serial-commands'
@@ -30,7 +29,7 @@ export default class EBB {
 
       // Resolve initial promise when we get the first feedback
       // from the board
-      const parser = port.pipe(new InterByteTimeout({interval: 15}))
+      const parser = port.pipe(new Readline({ delimiter: '\r\n' }))
       parser.on('data', async data => {
         this.handleSerialData(data)
 
