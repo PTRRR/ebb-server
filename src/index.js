@@ -55,6 +55,7 @@ async function initialize () {
     await ebb.initializeController(serialPort, ebbConfig)
     log.success('EBB controller initialized!')
     await runCircleTest(ebb)
+    await runCircleTest(ebb)
   } catch (error) {
     log.error(error)
   }

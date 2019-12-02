@@ -57,7 +57,7 @@ export default class EBB {
     }
 
     if (resolve) {
-      resolve(`${data}`)
+      resolve(`${data}`.trim())
     }
   }
 
@@ -87,10 +87,10 @@ export default class EBB {
   async waitUntilQueueIsEmpty () {
     return new Promise(async resolve => {
       let status = await this.getGeneralQuery()
-      while (status !== 'D0\r\n') {
+      while (status !== 'D0') {
         status = await this.getGeneralQuery()
       }
-      setTimeout(resolve, 100)
+      resolve()
     })
   }
 
@@ -192,6 +192,7 @@ export default class EBB {
   async home () {
     return new Promise(async resolve => {
       const command = await commands.homeMove(this.port, { stepRate: 10000 })
+      this.position = [0, 0]
       this.addToCommandQueue(command, resolve)
     })
   }
