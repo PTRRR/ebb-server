@@ -7,12 +7,12 @@ import { Signale } from 'signale'
 import { wait } from '../utils/time'
 import { DEFAULT_FONT } from '../config'
 
-const cmdSignale = new Signale({
+const ebbSignale = new Signale({
   disabled: false,
   interactive: false,
   logLevel: 'info',
   secrets: [],
-  scope: 'cmd',
+  scope: 'ebb',
   stream: process.stdout,
   types: {
     command: {
@@ -77,7 +77,11 @@ class Log {
   }
 
   command (text) {
-    return cmdSignale.command(text)
+    return ebbSignale.command(text)
+  }
+
+  note (text) {
+    return signale.note(text)
   }
 
   warn (text) {

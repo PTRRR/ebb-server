@@ -4,6 +4,7 @@ export const EBB_CONNECTION_TIMEOUT = 500
 export const MILLIMETER_IN_STEPS = 80
 export const ANIMATION_INTERVAL = 50
 export const DEFAULT_FONT = 'computer'
+export const SERVER_PORT = 8080
 export const FONTS_TO_LOAD = [
   { name: 'computer', path: 'fonts/computer.flf' },
   { name: 'cybermedium', path: 'fonts/cybermedium.flf' }

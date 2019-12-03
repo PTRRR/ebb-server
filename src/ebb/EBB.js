@@ -9,18 +9,18 @@ export default class EBB {
     this.port = null
     this.config = null
 
-    this.isRunning = false
+    this.isPrinting = false
     this.isDrawing = false
+    this.printingQueue = []
     this.commandQueue = []
 
     this.position = [0, 0]
-    this.speed = 50
+    this.speed = 30
   }
 
   async initializeController (port, config) {
     let initialized = false
     this.port = port
-    this.config = config
 
     return new Promise(async (resolve, reject) => {
       const connectionTimeoutId = setTimeout(() => {
@@ -36,7 +36,6 @@ export default class EBB {
         if (!initialized) {
           initialized = true
           clearTimeout(connectionTimeoutId)
-          await wait(1000)
           await this.reset()
           await this.configureController(config)
           resolve()
@@ -74,6 +73,33 @@ export default class EBB {
     await this.lowerBrush()
     await this.raiseBrush()
     await this.disableStepperMotors()
+  }
+
+  addToPrintingQueue (array) {
+    this.printingQueue = [
+      ...this.printingQueue,
+      ...array
+    ]
+  }
+
+  async print () {
+    if (!this.isPrinting) {
+      this.isPrinting = true
+      console.log('asdlkjh')
+      while (this.printingQueue.length > 0) {
+        const [ x, y, down ] = this.printingQueue.splice(0, 3)
+        if (down) await this.lowerBrush()
+        else await this.raiseBrush()
+        await this.moveTo(Math.round(x), Math.round(y))
+      }
+
+      await this.waitUntilQueueIsEmpty()
+      await this.home()
+      await this.waitUntilQueueIsEmpty()
+      await this.disableStepperMotors()
+      this.printingQueue = []
+      this.isPrinting = false
+    }
   }
 
   addToCommandQueue (command, resolve) {
@@ -173,19 +199,23 @@ export default class EBB {
   // Movements
 
   async lowerBrush () {
-    return new Promise(async resolve => {
-      this.isDrawing = true
-      const command = await commands.setPenState(this.port, { state: 0, duration: 150 })
-      this.addToCommandQueue(command, resolve)
-    })
+    if (!this.isDrawing) {
+      return new Promise(async resolve => {
+        this.isDrawing = true
+        const command = await commands.setPenState(this.port, { state: 0, duration: 150 })
+        this.addToCommandQueue(command, resolve)
+      })
+    }
   }
 
   async raiseBrush () {
-    return new Promise(async resolve => {
-      this.isDrawing = false
-      const command = await commands.setPenState(this.port, { state: 1, duration: 150 })
-      this.addToCommandQueue(command, resolve)
-    })
+    if (this.isDrawing) {
+      return new Promise(async resolve => {
+        this.isDrawing = false
+        const command = await commands.setPenState(this.port, { state: 1, duration: 150 })
+        this.addToCommandQueue(command, resolve)
+      })
+    }
   }
 
   async home () {
@@ -221,6 +251,7 @@ export default class EBB {
 
       // Reset position
       this.position = [targetX, targetY]
+
 
       const args = {
         duration,

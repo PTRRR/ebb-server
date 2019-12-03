@@ -2,7 +2,7 @@ import { log } from '../log'
 import { wait } from '../utils/time'
 
 export async function runCircleTest (ebb) {
-  const segments = 20
+  const segments = 100
   const radius = 7000
   await ebb.enableStepperMotors()
   for (let i = 0; i < segments + 1; i++) {
