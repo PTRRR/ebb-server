@@ -61,12 +61,6 @@ export default class EBB {
     }
   }
 
-  resolveCommand (resolve, data, options) {
-    const { type, message, logCommand = false } = options
-
-    
-  }
-
   async configureController (config) {
     this.config = config
     const { minServoHeight, maxServoHeight, servoRate } = this.config
@@ -95,11 +89,9 @@ export default class EBB {
       this.isPrinting = true
       while (this.printingQueue.length > 0) {
         const [ x, y, down ] = this.printingQueue.splice(0, 3)
-        console.log(x, y)
         if (down) await this.lowerBrush()
         else await this.raiseBrush()
         await this.moveTo(Math.round(x), Math.round(y))
-        console.log('ok')
       }
       
       await this.home()
