@@ -83,9 +83,9 @@ async function initialize () {
         case 'path':
           ebb.addToPrintingQueue(content)
           ebb.print().then(async () => {
-            await ebb.waitUntilQueueIsEmpty()
-            await ebb.home()
-            await ebb.disableStepperMotors()
+            // await ebb.waitUntilQueueIsEmpty()
+            // await ebb.home()
+            // await ebb.disableStepperMotors()
           })
         break;
       }

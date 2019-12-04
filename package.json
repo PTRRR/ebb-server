@@ -16,6 +16,7 @@
     "clear": "^0.1.0",
     "cross-env": "^6.0.3",
     "figlet": "^1.2.4",
+    "hex-to-binary": "^1.0.1",
     "qoa": "^0.2.0",
     "serialport": "^8.0.5",
     "signale": "^1.4.0",

@@ -1,4 +1,5 @@
 import Readline from '@serialport/parser-readline'
+import hexToBinary from 'hex-to-binary'
 import { clamp, wait } from '../utils'
 import { log } from '../log'
 import * as commands from './serial-commands'
@@ -47,16 +48,23 @@ export default class EBB {
   }
 
   handleSerialData (data) {
-    const { type, resolve, logCommand, args } = this.commandQueue.pop() || {}
-    
-    if ((data || args) && type && logCommand) {
-      const message = args || data
+    const command = this.commandQueue.pop() || {}
+    const { type, resolve, logCommand, args } = command
+    const message = args || data
+
+    if (message && type && logCommand) {
       log.command(`${type}: ${message}`.trim())
     }
 
     if (resolve) {
       resolve(`${data}`.trim())
     }
+  }
+
+  resolveCommand (resolve, data, options) {
+    const { type, message, logCommand = false } = options
+
+    
   }
 
   async configureController (config) {
@@ -85,17 +93,16 @@ export default class EBB {
   async print () {
     if (!this.isPrinting) {
       this.isPrinting = true
-      console.log('asdlkjh')
       while (this.printingQueue.length > 0) {
         const [ x, y, down ] = this.printingQueue.splice(0, 3)
+        console.log(x, y)
         if (down) await this.lowerBrush()
         else await this.raiseBrush()
         await this.moveTo(Math.round(x), Math.round(y))
+        console.log('ok')
       }
-
-      await this.waitUntilQueueIsEmpty()
+      
       await this.home()
-      await this.waitUntilQueueIsEmpty()
       await this.disableStepperMotors()
       this.printingQueue = []
       this.isPrinting = false
@@ -109,12 +116,54 @@ export default class EBB {
     })
   }
 
+  parseStatus (status) {
+    const binary = hexToBinary(status)
+
+    const [
+      gpioPinRB5,
+      gpioPinRB2,
+      buttonPressed,
+      penIsDown,
+      commandExecuting,
+      motor1Moving,
+      motor2Moving,
+      queueStatus
+    ] = binary.split('')
+
+    return {
+      gpioPinRB5: parseInt(gpioPinRB5),
+      gpioPinRB2: parseInt(gpioPinRB2),
+      buttonPressed: parseInt(buttonPressed),
+      penIsDown: parseInt(penIsDown),
+      commandExecuting: parseInt(commandExecuting),
+      motor1Moving: parseInt(motor1Moving),
+      motor2Moving: parseInt(motor2Moving),
+      queueStatus: parseInt(queueStatus)
+    }
+  }
+
+  getQueueStatus (status) {
+    const { queueStatus } = this.parseStatus(status)
+    return queueStatus
+  }
+
+  getMotorsStatus (status) {
+    const { motor1Moving, motor2Moving } = this.parseStatus(status)
+    return motor1Moving || motor2Moving
+  }
+
   async waitUntilQueueIsEmpty () {
     return new Promise(async resolve => {
-      let status = await this.getGeneralQuery()
-      while (status !== 'D0') {
-        status = await this.getGeneralQuery()
+      const status = await this.getGeneralQuery()
+      let queueStatus = this.getQueueStatus(status)
+      let motorStatus = this.getMotorsStatus(status)
+      
+      while (queueStatus || motorStatus) {
+        const status = await this.getGeneralQuery()
+        queueStatus = this.getQueueStatus(status)
+        motorStatus = this.getMotorsStatus(status)
       }
+
       resolve()
     })
   }
