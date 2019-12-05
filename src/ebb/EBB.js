@@ -16,7 +16,7 @@ export default class EBB {
     this.commandQueue = []
 
     this.position = [0, 0]
-    this.speed = 30
+    this.speed = 70
   }
 
   async initializeController (port, config) {
@@ -84,6 +84,10 @@ export default class EBB {
     ]
   }
 
+  emptyPrintingQueue () {
+    this.printingQueue = []
+  }
+
   async print () {
     if (!this.isPrinting) {
       this.isPrinting = true
@@ -94,6 +98,7 @@ export default class EBB {
         await this.moveTo(Math.round(x), Math.round(y))
       }
       
+      await this.raiseBrush()
       await this.home()
       await this.disableStepperMotors()
       this.printingQueue = []

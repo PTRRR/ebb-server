@@ -1,9 +1,8 @@
 import EBB from './ebb'
 import { log } from './log'
 import { wait } from './utils/time'
-import { createServer } from './server'
 import { getSerialPort } from './serial-connection'
-import { runCircleTest } from './tests'
+import { runXmasMarketInterface } from './interfaces'
 
 import {
   getConfig,
@@ -72,24 +71,7 @@ async function initialize () {
     await ebb.initializeController(serialPort, ebbConfig)
     log.success('EBB controller initialized!')
 
-    const server = await createServer(SERVER_PORT)
-    log.success(`Server is listening on port: ${SERVER_PORT}.`)
-    server.onMessage((connection, message) => {
-      const { utf8Data: data } = message
-      const { type, content } = JSON.parse(data)
-      log.note(`Client message: ${type}`)
-
-      switch (type) {
-        case 'path':
-          ebb.addToPrintingQueue(content)
-          ebb.print().then(async () => {
-            // await ebb.waitUntilQueueIsEmpty()
-            // await ebb.home()
-            // await ebb.disableStepperMotors()
-          })
-        break;
-      }
-    })
+    await runXmasMarketInterface(ebb)
   } catch (error) {
     log.error(error)
   }

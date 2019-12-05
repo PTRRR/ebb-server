@@ -1,5 +1,5 @@
 import websocket from 'websocket'
-import { log } from '../log'
+import { log } from '../../log'
 const { server: WebSocketServer } = websocket
 
 export function createServer(port) {
@@ -15,8 +15,6 @@ export function createServer(port) {
 
     websocketServer.on('request', request => {
       const connection = request.accept(null, request.origin)
-      log.note('Connection accepted.')
-
       connection.on('message', function (message) {
         if (websocketServer.onMessageCallback) {
           websocketServer.onMessageCallback(connection, message)
