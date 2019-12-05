@@ -2,6 +2,8 @@ import { Signale } from 'signale'
 import { SERVER_PORT } from '../../config'
 import { log } from '../../log'
 import { createServer } from './server'
+import * as globalConfig from '../../config'
+import serverConfig from '../../../ebb-config.json'
 
 const xmasLog = new Signale({
   disabled: false,
@@ -37,6 +39,12 @@ export async function runXmasMarketInterface (controller) {
         controller.print().then(() => {
           connection.send(JSON.stringify({ type: 'finish' }))
         })
+      break;
+      case 'config':
+        connection.send(JSON.stringify({ type: 'config', content: {
+          globalConfig,
+          serverConfig
+        }}))
       break;
       case 'stop':
         controller.emptyPrintingQueue()
