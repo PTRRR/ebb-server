@@ -1,9 +1,11 @@
 import { Signale } from 'signale'
-import { SERVER_PORT } from '../../config'
+import * as config from '../../config'
 import { log } from '../../log'
 import { createServer } from './server'
 import * as globalConfig from '../../config'
 import serverConfig from '../../../ebb-config.json'
+
+const { SERVER_PORT } = config
 
 const xmasLog = new Signale({
   disabled: false,
@@ -28,7 +30,7 @@ export async function runXmasMarketInterface (controller) {
   xmasLog.santa('XMAS SERVER initialized!')
   xmasLog.santa(`XMAS SERVER listening on port: ${SERVER_PORT}`)
 
-  server.onMessage((connection, data) => {
+  server.onMessage(async (connection, data) => {
     const { utf8Data } = data
     const { type, content } = JSON.parse(utf8Data)
     xmasLog.santa(`${type}: ${content}`)
@@ -41,10 +43,8 @@ export async function runXmasMarketInterface (controller) {
         })
       break;
       case 'config':
-        connection.send(JSON.stringify({ type: 'config', content: {
-          globalConfig,
-          serverConfig
-        }}))
+        const ebbConfig = await import('../../../ebb-config.json')
+        connection.send(JSON.stringify({ type: 'config', content: ebbConfig}))
       break;
       case 'stop':
         controller.emptyPrintingQueue()

@@ -95,7 +95,7 @@ export default class EBB {
         const [ x, y, down ] = this.printingQueue.splice(0, 3)
         if (down) await this.lowerBrush()
         else await this.raiseBrush()
-        await this.moveTo(Math.round(x), Math.round(y))
+        await this.moveTo(Math.round(x * MILLIMETER_IN_STEPS), Math.round(y * MILLIMETER_IN_STEPS))
       }
       
       await this.raiseBrush()
