@@ -2,8 +2,6 @@ import { Signale } from 'signale'
 import * as config from '../../config'
 import { log } from '../../log'
 import { createServer } from './server'
-import * as globalConfig from '../../config'
-import serverConfig from '../../../ebb-config.json'
 
 const { SERVER_PORT } = config
 
