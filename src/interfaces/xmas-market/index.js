@@ -31,7 +31,7 @@ export async function runXmasMarketInterface (controller) {
   server.onMessage(async (connection, data) => {
     const { utf8Data } = data
     const { type, content } = JSON.parse(utf8Data)
-    xmasLog.santa(`${type}: ${content}`)
+    // xmasLog.santa(`${type}`)
 
     switch(type) {
       case 'path':
