@@ -27,8 +27,7 @@ const xmasLog = new Signale({
 })
 
 export async function xmasMarket (controller) {
-  log.clear()
-  log.banner('XMAS - SERVER')
+  xmasLog.santa('XMAS-SERVER Initialized')
 
   let isPrinting = false
   let printingQueue = []
@@ -73,6 +72,7 @@ export async function xmasMarket (controller) {
       await runControllerCommand('disableStepperMotors')
       printingQueue = []
       isPrinting = false
+      xmasLog.santa('Finished printing')
     }
   }
   
@@ -144,6 +144,6 @@ export async function xmasMarket (controller) {
     xmasLog.santa(`${methods.join(' ')} -> ${path}`)
   }
 
-  log.note(`Server running on: ${ip.address()}`)
-  log.note(`Server listening on port: ${SERVER_PORT}`)
+  xmasLog.santa(`Server host: ${ip.address()}`)
+  xmasLog.santa(`Server port: ${SERVER_PORT}`)
 }

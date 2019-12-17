@@ -3,6 +3,7 @@ import qoa from 'qoa'
 import { log } from '../log'
 import { DEFAULT_EBB_CONFIG } from '../config'
 import { getSerialList } from '../serial'
+import * as interfaces from '../interfaces'
 
 export async function getConfig (configPath) {
   return new Promise((resolve, reject) => {
@@ -119,3 +120,13 @@ export async function saveConfig (name, config) {
   })
 }
 
+export async function runInterfacePrompt () {
+  return qoa.prompt([
+    {
+      type: 'interactive',
+      query: 'Select a server interface:',
+      handle: 'interface',
+      menu: Object.keys(interfaces)
+    }
+  ])
+}

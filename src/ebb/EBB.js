@@ -2,7 +2,7 @@ import Readline from '@serialport/parser-readline'
 import hexToBinary from 'hex-to-binary'
 import { clamp } from '../utils'
 import { log } from '../log'
-import * as commands from './serial-commands'
+import * as commands from './commands'
 import { MILLIMETER_IN_STEPS, EBB_CONNECTION_TIMEOUT } from '../config'
 
 export default class EBB {
