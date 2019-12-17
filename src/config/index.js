@@ -10,9 +10,8 @@ export const FONTS_TO_LOAD = [
   { name: 'cybermedium', path: 'fonts/cybermedium.flf' }
 ]
 export const DEFAULT_EBB_CONFIG = {
-  configName: 'A4_VERTICAL',
-  maxWidth: 210,
-  maxHeight: 148,
+  maxWidth: 420,
+  maxHeight: 297,
   minStepsPerMillisecond: 0.07,
   maxStepsPerMillisecond: 15,
   servoRate: 40000,

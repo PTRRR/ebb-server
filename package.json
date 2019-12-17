@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env SERVER_ENV=production node dist/main",
+    "start": "npm run build && cross-env SERVER_ENV=production node dist/main",
     "start:dev": "cross-env SERVER_ENV=development nodemon dist/main.js",
     "build": "webpack",
     "dev": "webpack --watch",

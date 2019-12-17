@@ -27,7 +27,7 @@ const xmasLog = new Signale({
 })
 
 export async function xmasMarket (controller) {
-  xmasLog.santa('XMAS-SERVER Initialized')
+  xmasLog.santa('XMAS-SERVER initialized')
 
   let isPrinting = false
   let printingQueue = []
@@ -138,12 +138,6 @@ export async function xmasMarket (controller) {
   app.use(router.allowedMethods())
   app.listen(SERVER_PORT)
   
-  const { stack } = router
-  for (const endpoint of stack) {
-    const { methods, path } = endpoint
-    xmasLog.santa(`${methods.join(' ')} -> ${path}`)
-  }
-
   xmasLog.santa(`Server host: ${ip.address()}`)
   xmasLog.santa(`Server port: ${SERVER_PORT}`)
 }
