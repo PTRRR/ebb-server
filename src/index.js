@@ -74,6 +74,7 @@ async function initialize () {
     await runXmasMarketInterface(ebb)
   } catch (error) {
     log.error(error)
+    process.exit(22)
   }
 }
 
