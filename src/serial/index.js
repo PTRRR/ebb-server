@@ -1,4 +1,5 @@
 import SerialPort from 'serialport'
+import { log } from '../log'
 
 export async function getSerialList () {
   return SerialPort.list()
@@ -10,7 +11,9 @@ export async function getSerialPort (options = {}) {
     const port = new SerialPort(path)
     
     port.on('error', error => {
-      reject(error)
+      log.warn(error)
+      log.warn('Server is running in simulation mode')
+      resolve(null)
     })
 
     port.on('open', () => {

@@ -2,7 +2,7 @@ import fs from 'fs'
 import qoa from 'qoa'
 import { log } from '../log'
 import { DEFAULT_EBB_CONFIG } from '../config'
-import { getSerialList } from '../serial-connection'
+import { getSerialList } from '../serial'
 
 export async function getConfig (configPath) {
   return new Promise((resolve, reject) => {

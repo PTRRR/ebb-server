@@ -37,28 +37,40 @@ export async function xmasMarket (controller) {
     return [...printingQueue, ...path]
   }
 
+  async function runControllerCommand (command, args = []) {
+    if (controller.port && controller[command]) {
+      await controller[command](...args)
+    } else {
+      return new Promise(resolve => {
+        const values = args.length > 0 ? ` -> ${args.join(', ')}`: ''
+        log.warn(`SIMULATION: ${command}${values}`)
+        setTimeout(resolve, 50)
+      })
+    }
+  }
+
   async function executePrintingQueue () {
     if (!isPrinting) {
       const initialSpeed = controller.speed
       isPrinting = true
 
       while (printingQueue.length > 0) {
-        const { x, y, z: down, v: speed } = printingQueue.splice(0, 1)
+        const point = printingQueue.pop()
+        const { x, y, z: down, v: speed } = point
         
-        if (down) await controller.lowerBrush()
-        else await controller.raiseBrush()
+        if (down) await runControllerCommand('lowerBrush')
+        else await runControllerCommand('raiseBrush')
 
         controller.speed = speed || initialSpeed
-
         const stepsX = Math.round(x * MILLIMETER_IN_STEPS)
         const stepsY = Math.round(y * MILLIMETER_IN_STEPS)
-        await controller.moveTo(stepsX, stepsY)
+        await runControllerCommand('moveTo', [stepsX, stepsY])
       }
 
       controller.speed = initialSpeed
-      await controller.raiseBrush()
-      await controller.home()
-      await controller.disableStepperMotors()
+      await runControllerCommand('raiseBrush')
+      await runControllerCommand('home')
+      await runControllerCommand('disableStepperMotors')
       printingQueue = []
       isPrinting = false
     }
@@ -73,17 +85,16 @@ export async function xmasMarket (controller) {
     
     if (path && controller) {
       printingQueue = addToPrintingQueue(path)
-      executePrintingQueue()
-
       log.success(`${path.length} points added to the printing queue!`)
+      executePrintingQueue()
       ctx.status = 200
       await next()
     }
   })
 
   router.get('/config', async (ctx, next) => {
-    const ebbConfig = await import('../../../ebb-config.json')
-    ctx.body = JSON.stringify(ebbConfig)
+    const { default: config } = await import('../../../ebb-config.json')
+    ctx.body = JSON.stringify(config)
     ctx.status = 200
     await next()
   })
