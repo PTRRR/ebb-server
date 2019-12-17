@@ -67,11 +67,11 @@ async function initialize () {
     // const serialPort = await getSerialPort(serialConfig)
     // log.success('Serial port initialized!')
     
-    const ebb = new EBB()
+    // const ebb = new EBB()
     // await ebb.initializeController(serialPort, ebbConfig)
     // log.success('EBB controller initialized!')
 
-    await xmasMarket(ebb)
+    await xmasMarket()
   } catch (error) {
     log.error(error)
     process.exit(22)

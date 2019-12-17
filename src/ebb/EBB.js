@@ -1,6 +1,6 @@
 import Readline from '@serialport/parser-readline'
 import hexToBinary from 'hex-to-binary'
-import { clamp, wait } from '../utils'
+import { clamp } from '../utils'
 import { log } from '../log'
 import * as commands from './serial-commands'
 import { MILLIMETER_IN_STEPS, EBB_CONNECTION_TIMEOUT } from '../config'
@@ -10,9 +10,7 @@ export default class EBB {
     this.port = null
     this.config = null
 
-    this.isPrinting = false
     this.isDrawing = false
-    this.printingQueue = []
     this.commandQueue = []
 
     this.position = [0, 0]
@@ -21,15 +19,15 @@ export default class EBB {
 
   async initializeController (port, config) {
     let initialized = false
+
     this.port = port
+    this.speed = config.defaultSpeed || 60
 
     return new Promise(async (resolve, reject) => {
       const connectionTimeoutId = setTimeout(() => {
         reject('Can\'t connect to the EggBotBoard.')
       }, EBB_CONNECTION_TIMEOUT)
 
-      // Resolve initial promise when we get the first feedback
-      // from the board
       const parser = port.pipe(new Readline({ delimiter: '\r\n' }))
       parser.on('data', async data => {
         this.handleSerialData(data)
@@ -69,47 +67,7 @@ export default class EBB {
     await this.setServoMinHeight(minServoHeight)
     await this.setServoMaxHeight(maxServoHeight)
     await this.setServoRate(servoRate)
-
-    // Configuration feedback
-    await this.enableStepperMotors()
-    await this.lowerBrush()
-    await this.raiseBrush()
     await this.disableStepperMotors()
-  }
-
-  addToPrintingQueue (array) {
-    this.printingQueue = [
-      ...this.printingQueue,
-      ...array
-    ]
-  }
-
-  emptyPrintingQueue () {
-    this.printingQueue = []
-  }
-
-  async print () {
-    if (!this.isPrinting) {
-      this.isPrinting = true
-      const initialSpeed = this.speed
-
-      while (this.printingQueue.length > 0) {
-        const { x, y, z: down, v: speed } = this.printingQueue.splice(0, 1)
-        
-        if (down) await this.lowerBrush()
-        else await this.raiseBrush()
-
-        this.speed = speed || initialSpeed
-        await this.moveTo(Math.round(x * MILLIMETER_IN_STEPS), Math.round(y * MILLIMETER_IN_STEPS))
-      }
-      
-      this.speed = initialSpeed
-      await this.raiseBrush()
-      await this.home()
-      await this.disableStepperMotors()
-      this.printingQueue = []
-      this.isPrinting = false
-    }
   }
 
   addToCommandQueue (command, resolve) {
@@ -121,6 +79,7 @@ export default class EBB {
 
   parseStatus (status) {
     const binary = hexToBinary(status)
+    const bits = binary.split('').map(it => parseInt(it))
 
     const [
       gpioPinRB5,
@@ -131,26 +90,26 @@ export default class EBB {
       motor1Moving,
       motor2Moving,
       queueStatus
-    ] = binary.split('')
+    ] = bits
 
     return {
-      gpioPinRB5: parseInt(gpioPinRB5),
-      gpioPinRB2: parseInt(gpioPinRB2),
-      buttonPressed: parseInt(buttonPressed),
-      penIsDown: parseInt(penIsDown),
-      commandExecuting: parseInt(commandExecuting),
-      motor1Moving: parseInt(motor1Moving),
-      motor2Moving: parseInt(motor2Moving),
-      queueStatus: parseInt(queueStatus)
+      gpioPinRB5,
+      gpioPinRB2,
+      buttonPressed,
+      penIsDown,
+      commandExecuting,
+      motor1Moving,
+      motor2Moving,
+      queueStatus
     }
   }
 
-  getQueueStatus (status) {
+  getQueueFromStatus (status) {
     const { queueStatus } = this.parseStatus(status)
     return queueStatus
   }
 
-  getMotorsStatus (status) {
+  getMotorsFromStatus (status) {
     const { motor1Moving, motor2Moving } = this.parseStatus(status)
     return motor1Moving || motor2Moving
   }
@@ -158,13 +117,13 @@ export default class EBB {
   async waitUntilQueueIsEmpty () {
     return new Promise(async resolve => {
       const status = await this.getGeneralQuery()
-      let queueStatus = this.getQueueStatus(status)
-      let motorStatus = this.getMotorsStatus(status)
+      let queueStatus = this.getQueueFromStatus(status)
+      let motorStatus = this.getMotorsFromStatus(status)
       
       while (queueStatus || motorStatus) {
         const status = await this.getGeneralQuery()
-        queueStatus = this.getQueueStatus(status)
-        motorStatus = this.getMotorsStatus(status)
+        queueStatus = this.getQueueFromStatus(status)
+        motorStatus = this.getMotorsFromStatus(status)
       }
 
       resolve()
@@ -248,12 +207,15 @@ export default class EBB {
     })
   }
 
-  // Movements
+  async penIsDown () {
+    const status = await this.getGeneralQuery()
+    const { penIsDown } = this.parseStatus(status)
+    return penIsDown
+  }
 
   async lowerBrush () {
-    if (!this.isDrawing) {
+    if (!await this.penIsDown()) {
       return new Promise(async resolve => {
-        this.isDrawing = true
         const command = await commands.setPenState(this.port, { state: 0, duration: 150 })
         this.addToCommandQueue(command, resolve)
       })
@@ -261,9 +223,8 @@ export default class EBB {
   }
 
   async raiseBrush () {
-    if (this.isDrawing) {
+    if (await this.penIsDown()) {
       return new Promise(async resolve => {
-        this.isDrawing = false
         const command = await commands.setPenState(this.port, { state: 1, duration: 150 })
         this.addToCommandQueue(command, resolve)
       })
@@ -278,10 +239,10 @@ export default class EBB {
     })
   }
 
-  //80step = 1mm
   async moveTo (targetX, targetY) {
     return new Promise(async resolve => {
       const [x, y] = this.position
+      
       const {
         maxWidth,
         maxHeight,
@@ -291,8 +252,10 @@ export default class EBB {
 
       targetX = clamp(targetX, 0, maxWidth * MILLIMETER_IN_STEPS)
       targetY = clamp(targetY, 0, maxHeight * MILLIMETER_IN_STEPS)
+      this.position = [targetX, targetY]
 
       const { amountX, amountY } = commands.getAmountSteps(x, y, targetX, targetY)
+      
       const duration = commands.getDuration(
         this.speed,
         minStepsPerMillisecond,
@@ -301,73 +264,14 @@ export default class EBB {
         amountY
       )
 
-      // Reset position
-      this.position = [targetX, targetY]
-
-
       const args = {
         duration,
         axisSteps1: amountX,
-        axisSteps2: amountY,
-        deltaStepsX: targetX - x,
-        deltaStepsY: targetY - y,
-        isDrawing: this.isDrawing
+        axisSteps2: amountY
       }
 
       const command = await commands.stepperMove(this.port, args)
       this.addToCommandQueue(command, resolve)
-    })
-  }
-
-  // TODO: Implement low level move
-  async lowLevelMoveTo (targetX, targetY) {
-    const [x, y] = this.position
-    const {
-      maxWidth,
-      maxHeight,
-      minStepsPerMillisecond,
-      maxStepsPerMillisecond
-    } = this.config
-
-    const STEP = 40 // μs
-    const STEP_IN_SECONDS = 0.00004
-    const ONE_STEP = 2147483648
-
-    targetX = clamp(targetX, 0, maxWidth * MILLIMETER_IN_STEPS)
-    targetY = clamp(targetY, 0, maxHeight * MILLIMETER_IN_STEPS)
-
-    const { amountX, amountY } = commands.getAmountSteps(x, y, targetX, targetY)
-    const duration = commands.getDuration(
-      this.speed,
-      minStepsPerMillisecond,
-      maxStepsPerMillisecond,
-      amountX,
-      amountY
-    )
-
-    // Reset position
-    this.position = [targetX, targetY]
-
-    const stepsPerSeconds = 85855
-
-    // const rateTerm1 =
-    // console.log(amountX, amountY)
-
-    const rateTerm1 = Math.abs(
-      Math.round(stepsPerSeconds * (amountX / (duration / 1000)))
-    )
-    const rateTerm2 = Math.abs(
-      Math.round(stepsPerSeconds * (amountY / (duration / 1000)))
-    )
-
-    return commands.lowLevelMove(this.port, {
-      rateTerm1,
-      axisSteps1: amountX,
-      deltaR1: 0,
-      rateTerm2,
-      axisSteps2: amountY,
-      deltaR2: 0,
-      duration
     })
   }
 }

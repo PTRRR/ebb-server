@@ -8,7 +8,7 @@ import * as config from '../../config'
 import { log } from '../../log'
 import ip from 'ip'
 
-const { SERVER_PORT } = config
+const { SERVER_PORT, MILLIMETER_IN_STEPS } = config
 
 const xmasLog = new Signale({
   disabled: false,
@@ -29,6 +29,40 @@ const xmasLog = new Signale({
 export async function xmasMarket (controller) {
   log.clear()
   log.banner('XMAS - SERVER')
+
+  let isPrinting = false
+  let printingQueue = []
+
+  function addToPrintingQueue (path) {
+    return [...printingQueue, ...path]
+  }
+
+  async function executePrintingQueue () {
+    if (!isPrinting) {
+      const initialSpeed = controller.speed
+      isPrinting = true
+
+      while (printingQueue.length > 0) {
+        const { x, y, z: down, v: speed } = printingQueue.splice(0, 1)
+        
+        if (down) await controller.lowerBrush()
+        else await controller.raiseBrush()
+
+        controller.speed = speed || initialSpeed
+
+        const stepsX = Math.round(x * MILLIMETER_IN_STEPS)
+        const stepsY = Math.round(y * MILLIMETER_IN_STEPS)
+        await controller.moveTo(stepsX, stepsY)
+      }
+
+      controller.speed = initialSpeed
+      await controller.raiseBrush()
+      await controller.home()
+      await controller.disableStepperMotors()
+      printingQueue = []
+      isPrinting = false
+    }
+  }
   
   const app = new Koa()
   const router = new Router()
@@ -37,7 +71,10 @@ export async function xmasMarket (controller) {
     const { body } = ctx.request
     const { path } = body
     
-    if (path) {
+    if (path && controller) {
+      printingQueue = addToPrintingQueue(path)
+      executePrintingQueue()
+
       log.success(`${path.length} points added to the printing queue!`)
       ctx.status = 200
       await next()
@@ -51,13 +88,8 @@ export async function xmasMarket (controller) {
     await next()
   })
 
-  router.post('/config', async (ctx, next) => {
-    const { body } = ctx.request
-    const { config } = body
-    await next()
-  })
-
   router.post('/stop', async (ctx, next) => {
+    printingQueue = []
     log.success('Clear printing queue!')
     ctx.status = 200
     await next()
@@ -95,7 +127,6 @@ export async function xmasMarket (controller) {
   app.use(router.allowedMethods())
   app.listen(SERVER_PORT)
   
-  // Log endpoints
   const { stack } = router
   for (const endpoint of stack) {
     const { methods, path } = endpoint

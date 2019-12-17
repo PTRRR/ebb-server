@@ -90,13 +90,8 @@ export async function runEbbPrompt () {
     },
     {
       type: 'input',
-      query: 'Enter drawing speed:',
-      handle: 'drawingSpeed'
-    },
-    {
-      type: 'input',
-      query: 'Enter moving speed:',
-      handle: 'movingSpeed'
+      query: 'Enter default speed:',
+      handle: 'defaultSpeed'
     }
   ])
 
@@ -105,6 +100,8 @@ export async function runEbbPrompt () {
       const defaultValue = DEFAULT_EBB_CONFIG[key]
       config[key] = defaultValue
       log.warn(`Default ${key}: ${defaultValue}`)
+    } else {
+      config[key] = parseFloat(value)
     }
   }
 
