@@ -2,7 +2,7 @@ import EBB from './ebb'
 import { log } from './log'
 import { wait } from './utils/time'
 import { getSerialPort } from './serial-connection'
-import { runXmasMarketInterface } from './interfaces'
+import { xmasMarket } from './interfaces'
 
 import {
   getConfig,
@@ -64,14 +64,14 @@ async function initialize () {
       log.success('Config file saved!')
     }
 
-    const serialPort = await getSerialPort(serialConfig)
-    log.success('Serial port initialized!')
+    // const serialPort = await getSerialPort(serialConfig)
+    // log.success('Serial port initialized!')
     
     const ebb = new EBB()
-    await ebb.initializeController(serialPort, ebbConfig)
-    log.success('EBB controller initialized!')
+    // await ebb.initializeController(serialPort, ebbConfig)
+    // log.success('EBB controller initialized!')
 
-    await runXmasMarketInterface(ebb)
+    await xmasMarket(ebb)
   } catch (error) {
     log.error(error)
     process.exit(22)

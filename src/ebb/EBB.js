@@ -91,13 +91,19 @@ export default class EBB {
   async print () {
     if (!this.isPrinting) {
       this.isPrinting = true
+      const initialSpeed = this.speed
+
       while (this.printingQueue.length > 0) {
-        const [ x, y, down ] = this.printingQueue.splice(0, 3)
+        const { x, y, z: down, v: speed } = this.printingQueue.splice(0, 1)
+        
         if (down) await this.lowerBrush()
         else await this.raiseBrush()
+
+        this.speed = speed || initialSpeed
         await this.moveTo(Math.round(x * MILLIMETER_IN_STEPS), Math.round(y * MILLIMETER_IN_STEPS))
       }
       
+      this.speed = initialSpeed
       await this.raiseBrush()
       await this.home()
       await this.disableStepperMotors()
