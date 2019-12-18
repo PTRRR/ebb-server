@@ -10,7 +10,7 @@ export default class EBB {
     this.port = null
     this.config = null
 
-    this.isDrawing = false
+    this.penIsDown = true
     this.commandQueue = []
 
     this.position = [0, 0]
@@ -67,6 +67,7 @@ export default class EBB {
     await this.setServoMinHeight(minServoHeight)
     await this.setServoMaxHeight(maxServoHeight)
     await this.setServoRate(servoRate)
+    await this.raiseBrush()
     await this.disableStepperMotors()
   }
 
@@ -207,23 +208,20 @@ export default class EBB {
     })
   }
 
-  async penIsDown () {
-    const status = await this.getGeneralQuery()
-    const { penIsDown } = this.parseStatus(status)
-    return penIsDown
-  }
-
   async lowerBrush () {
-    if (!await this.penIsDown()) {
+    if (!this.penIsDown) {
+      this.penIsDown = true
       return new Promise(async resolve => {
         const command = await commands.setPenState(this.port, { state: 0, duration: 150 })
         this.addToCommandQueue(command, resolve)
       })
     }
+
   }
 
   async raiseBrush () {
-    if (await this.penIsDown()) {
+    if (this.penIsDown) {
+      this.penIsDown = false
       return new Promise(async resolve => {
         const command = await commands.setPenState(this.port, { state: 1, duration: 150 })
         this.addToCommandQueue(command, resolve)

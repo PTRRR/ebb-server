@@ -1,6 +1,5 @@
 import EBB from './ebb'
 import { log } from './log'
-import { wait } from './utils/time'
 import { getSerialPort } from './serial'
 import * as interfaces from './interfaces'
 

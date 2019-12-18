@@ -27,8 +27,6 @@ const xmasLog = new Signale({
 })
 
 export async function xmasMarket (controller) {
-  xmasLog.santa('XMAS-SERVER initialized')
-
   let isPrinting = false
   let printingQueue = []
 
@@ -50,14 +48,14 @@ export async function xmasMarket (controller) {
 
   async function executePrintingQueue () {
     if (!isPrinting) {
-      const initialSpeed = controller.speed
       isPrinting = true
+      const initialSpeed = controller.speed
 
       while (printingQueue.length > 0) {
-        const point = printingQueue.pop()
-        const { x, y, z: down, v: speed } = point
-        
-        if (down) await runControllerCommand('lowerBrush')
+        const point = printingQueue.shift()
+        const { x, y, z, v: speed } = point
+
+        if (z) await runControllerCommand('lowerBrush')
         else await runControllerCommand('raiseBrush')
 
         controller.speed = speed || initialSpeed
@@ -138,6 +136,7 @@ export async function xmasMarket (controller) {
   app.use(router.allowedMethods())
   app.listen(SERVER_PORT)
   
-  xmasLog.santa(`Server host: ${ip.address()}`)
+  xmasLog.santa('XMAS-SERVER initialized')
+  xmasLog.santa(`Server host: localhost / ${ip.address()}`)
   xmasLog.santa(`Server port: ${SERVER_PORT}`)
 }
